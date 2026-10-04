@@ -3,6 +3,12 @@
 Date: 2026-08-30
 Status: Accepted
 
+Later clarification and partial supersession:
+[ADR-0019](0019-unary-idempotency-and-recovery.md) defines the SDK cap as two
+retries (three total attempts), requires protection for uncertain execution, and
+supersedes cancellation propagation for unary transport disconnects. The original
+decision below is retained as history; explicit caller cancellation remains open.
+
 ## Context
 
 Retry is nested inside fallback. Done naively the two multiply:

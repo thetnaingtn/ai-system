@@ -1,7 +1,9 @@
 # Architecture Decision Records
 
-Decisions for the AI platform SDK and services. Model service first; workflow
-service comes later.
+Decisions for the central AI platform SDK and services: models, data/RAG,
+sessions (messages and conversations), and tools. Model service first; the future
+workflow service coordinates these primitives. Applications coordinate them
+until then.
 
 Each record states the decision, why, and what it costs. A decision that turns
 out wrong gets a new ADR that supersedes the old one — records are never edited
@@ -25,5 +27,8 @@ to hide history.
 | [0014](0014-tenant-identity.md) | Tenant identity is proven by the platform, resolved at the transport boundary | Accepted |
 | [0015](0015-uniform-interface-seam.md) | The uniform interface seam: rename, emulate, or classify | Accepted |
 | [0016](0016-tool-calling.md) | Tool calling: OpenAI's shape, pinned and owned | Accepted |
+| [0017](0017-platform-sdk-service-namespaces.md) | One platform SDK with lazily initialized service clients | Accepted; failure behavior partially deferred |
+| [0018](0018-prompt-registry-and-release.md) | Immutable prompt revisions with separate, authorized releases | Accepted |
+| [0019](0019-unary-idempotency-and-recovery.md) | Unary retry recovery uses Redis records and bounded operations | Accepted; cancellation and mechanics partially deferred |
 
 See [open-questions.md](open-questions.md) for what is still undecided.

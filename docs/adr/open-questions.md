@@ -36,8 +36,15 @@ services rather than the only door.
 - Behavior when a provider ignores the parallel-tool-calls toggle.
 
 ### Q15. Idempotency key
-A retry after timeout may double-bill and, in tool-calling flows, re-execute side
-effects (ADR-0009). One field in the request. Add it now.
+Partially settled by [ADR-0019](0019-unary-idempotency-and-recovery.md): shared
+keys across unary attempts, Redis-backed result replay, 10-minute completed-result
+retention, fail closed without Redis, unknown-outcome errors rather than automatic
+regeneration, and continued operation after transport disconnect until its
+original deadline. SDK cap clarified as two retries / three total attempts.
+
+Still open: explicit cancellation, atomic operation ownership and crash detection,
+Redis record-loss behavior, provider timeout/idempotency semantics, and safe retry
+contracts outside unary generation. Streaming replay is excluded from v1.
 
 ### Streaming API shape
 Channel, iterator, or callback? How are `ABORTED` + `partial: true` (ADR-0008)
@@ -55,24 +62,24 @@ them.
 ## Correctness and safety
 
 ### Q21. Prompt x model binding
-A prompt tuned for one model falls back onto another, returns 200, and is quietly
-worse — the worst failure mode, because nothing alerts. Does a stored prompt
-declare compatible models? Does an incompatible fallback get refused, warned, or
-served?
+Settled for v1 by [ADR-0018](0018-prompt-registry-and-release.md): teams own
+quality compatibility and evaluations. No prompt-specific model compatibility
+list; per-call fallback disabling is sufficient. Technical capability enforcement
+continues to apply.
 
 ### Q23. Prompt versioning
-Proposed and unratified: prompts are **immutable versions**; `latest` / `stable`
-are movable tags; the response reports the resolved `prompt_version`. Rollback is
-repointing a tag.
-
-Note the change profiles are opposite: model catalog changes a few times a year
-(PR is right); prompts change daily or hourly (a write API is right, or teams
-will hardcode strings and the registry loses its purpose).
+Settled by [ADR-0018](0018-prompt-registry-and-release.md): platform-assigned
+immutable revisions, identical-content deduplication, default `stable` selection,
+exact revision pinning, and separate releases with expected-revision conflict
+checks. Tenant and platform-owned organization scopes are supported. Authorized
+application backends can register and release; those permissions are separate.
+First-release mechanics and deletion/retention remain open.
 
 ### Q24. Templating
-Which engine, and what happens on a missing variable? Silent empty string is most
-libraries' default and is wrong here — it yields a subtly broken prompt that
-still returns 200. Error on missing.
+Settled for v1 by [ADR-0018](0018-prompt-registry-and-release.md): store plain
+system prompt text, with teams constructing changing request messages. No platform
+substitution. Template support, engine choice, and variable validation are deferred
+to a later version. Registered and inline system prompts are mutually exclusive.
 
 ### Logging and PII
 Never asked, and the one that becomes a compliance incident. Are prompt and
@@ -103,9 +110,13 @@ control, redaction. If no: how does anyone debug a bad generation?
 ## SDK internals
 
 ### Q26. Lazy initialization
-Ten goroutines call `Generate` at boot: do all ten dial, or do nine block behind
-one `sync.Once`? And does a failed dial get cached permanently by that `Once` —
-turning a transient startup blip into a permanently dead client?
+Partially settled by [ADR-0017](0017-platform-sdk-service-namespaces.md): access
+to a namespace instantiates one shared gRPC client per platform instance, including
+under concurrent access. Construction does not require backend readiness.
+
+Still open: client-construction failure handling and connection recovery. A
+transient failure must not accidentally become a permanently cached failure; the
+precise contract has not yet been ratified.
 
 Lazy init also trades startup failure for call-time failure: bad credentials
 surface on a user-facing request instead of at boot, where the process could
