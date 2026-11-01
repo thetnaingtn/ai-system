@@ -46,49 +46,109 @@ settles organization-wide custom models, endpoint updates, and managed credentia
 | Budget caps | Monthly UTC spend caps with reservations, rejection of new work on exhaustion, and reviewed unmetered exemptions; separate rate/concurrency protection. [ADR-0028](0028-monthly-budgets-and-unmetered-model-approval.md) |
 | SLO and on-call | Best-effort v1; no contractual availability promise or 24/7 commitment. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
 
-## Remaining design and implementation work
+## First model service: remaining design and implementation work
 
-- **Durable storage and degradation (ADR-0013):** PostgreSQL is selected for
-  durable records and Redis for temporary state (ADR-0026). Specify schema and
-  transactions, cache refresh/coherence, maximum stale age, cold-start/readiness,
-  and revocation visibility. ADR-0027 settles serving cached configuration while
-  PostgreSQL is down, failing on missing configuration, and rejecting writes.
-- **Unary recovery (Q15):** define atomic claim/completion transitions, owner lease
-  durations, fingerprint normalization, waiter notification, cancellation routing,
-  and completion/cancellation race ordering. Specify takeover behavior,
-  non-completed-record retention, Redis failover/record loss, and provider
-  timeout/idempotency behavior. ADR-0025 permits bounded regeneration after lost
-  records or expired owners, accepting duplicate provider cost and changed output.
-  No PostgreSQL execution ledger is required solely to prevent duplicates.
-  Determine safe retry contracts for service writes beyond generation separately.
-- **Tenant protection:** choose numeric quotas, token/concurrency accounting,
-  reservation implementation and reconciliation (including uncertain generation
-  costs), production capacity allocation, month-boundary attribution, and outages
-  of enforcement state. ADR-0028 settles monthly UTC resets, rejection on
-  exhaustion with in-flight completion, missing-price blocking, and approved
-  unmetered exemptions. Do not silently revert to unlimited use.
-- **Data, sessions, memory, and tools:** specify schemas, access boundaries,
-  lifecycle/retention, tool invocation, and service-owned storage contracts.
-  Determine embedding integration, ingestion, and reranking scope and release
-  sequencing after the first model service (ADR-0026). The application owns
-  deciding when to write memory.
-- **SDK experience:** Go is the initial platform SDK language (ADR-0026); other
-  generated gRPC clients remain supported at the service boundary. Finalize Go
-  packaging, streaming signatures, and typed errors. Additional language wrappers
-  are deferred; generated clients alone do not implement automatic platform behavior.
-- **Prompt details:** implement hash-based exact-text equality, PostgreSQL
-  uniqueness/revision transactions, collision handling, expected-absent first-release
-  encoding, reference tracking, and later physical deletion design. ADR-0027 settles
-  the equality, concurrent registration, and first-release behavior.
-- **Custom models and secrets:** implement organization-wide approved entries,
-  pending unmetered approval, staged endpoint changes, owner/platform update
-  authorization, and managed secret references (ADR-0029). Finalize registration
-  equality, endpoint validation, secret backend and rotation refresh, approval
-  auditing, and reconciliation with CI-managed baseline catalog entries.
-- **Deployment and telemetry:** Envoy route/security policies, timeouts and drain
-  margins, trace sampling/exporters, safe metadata allowlists, telemetry retention,
-  and monitoring for best-effort operations. Ensure logging/exception paths cannot
-  emit content prohibited by ADR-0022.
+Major architecture and policies are settled. Most items below are implementation
+choices delegated to the implementer, not blockers requiring another owner
+interview. Record the selected details as implementation proceeds; raise new
+product tradeoffs if they change accepted scope, privacy, cost, or availability.
 
-Some of these details may reveal product tradeoffs. The delegated defaults do not
-silently authorize changes to the accepted scope, privacy, or availability policy.
+Start with the protobuf/Go contract and PostgreSQL schema, then implement the
+model service against the accepted ADRs.
+
+### 1. API contracts and Go SDK
+
+- [ ] Finalize versioned protobuf messages and RPCs for generation/streaming,
+  prompts/releases, discovery, policies, model registration/approval/update,
+  credential rotation, and explicit cancellation.
+- [ ] Define structured error details and typed Go SDK errors.
+- [ ] Finalize Go package layout, generated types, lazy client construction,
+  iterator/close behavior, retry metadata, cancellation, and test interfaces.
+- [ ] Preserve cross-language generated gRPC access. Go is the initial maintained
+  platform SDK; additional language wrappers are deferred (ADR-0026).
+
+### 2. PostgreSQL design and prompt mechanics
+
+- [ ] Define tables, migrations, transactions, indexes, ownership/authorization
+  records, and constraints for catalog, policies, prompts/releases, approvals,
+  pricing, and budget-related durable records.
+- [ ] Implement SHA-256-based exact-text prompt deduplication with stored-text
+  comparison, collision handling, and concurrent uniqueness enforcement.
+- [ ] Allocate distinct revisions atomically for changed content; return existing
+  revisions for identical content without moving release tags.
+- [ ] Encode expected-absent first releases and expected-current-revision updates,
+  returning conflicts on races (ADR-0027).
+- [ ] Implement prompt reference tracking. Physical deletion remains deferred.
+
+### 3. Cache behavior and PostgreSQL outages
+
+- [ ] Specify refresh timing, configuration coherence, maximum stale age, and
+  visibility of authorization/policy revocations during outages.
+- [ ] Define cold-start/bootstrap and readiness behavior.
+- [ ] Preserve the settled policy: serve cached required configuration, fail on
+  missing required configuration, and reject writes during PostgreSQL outages.
+  Redis and quota availability rules remain separate (ADR-0027).
+
+### 4. Monthly budgets and tenant protection
+
+- [ ] Choose numeric rate, token, concurrency, and spend limits and production
+  capacity allocation.
+- [ ] Implement cost reservation, actual-usage reconciliation, retry/recovery
+  accounting, and handling of uncertain or missing provider usage/cost.
+- [ ] Specify month-boundary attribution, reservation expiry/release, and behavior
+  when enforcement state is unavailable.
+- [ ] Preserve monthly UTC reset, rejection of new work on exhaustion, in-flight
+  completion, and paid-model missing-price blocking. Only approved unmetered
+  models bypass provider-spend accounting; rate/concurrency limits still apply
+  (ADR-0028).
+
+### 5. Redis recovery and cancellation
+
+- [ ] Define atomic claim/completion transitions, request fingerprint fields and
+  normalization, ownership tokens, lease durations, and takeover timing.
+- [ ] Implement cross-replica waiting/completion notification and cancellation
+  delivery/observation; settle completion-versus-cancellation ordering.
+- [ ] Define retention of non-completed records, Redis failover/record-loss
+  behavior, and original-deadline/attempt-budget propagation across takeovers.
+- [ ] Preserve best-effort generation deduplication: bounded regeneration after
+  lost records or expired owners is allowed, even if it duplicates provider cost
+  or changes the answer. No PostgreSQL execution ledger is required solely to
+  prevent duplicate generation (ADR-0025).
+- [ ] Define safe retry contracts for service writes independently; generation
+  tolerance does not authorize replay of application-owned tool side effects.
+
+### 6. Custom models and secret management
+
+- [ ] Finalize registration equality, approval schema, owner/platform update
+  authorization, capability validation, and endpoint destination validation.
+- [ ] Implement organization-wide approved models and pending, unusable no-price
+  registrations until unmetered approval.
+- [ ] Stage replacement endpoints for reapproval while keeping the current
+  approved endpoint active; rejection preserves the active endpoint.
+- [ ] Select the secret-manager backend (Vault is a candidate), permissions,
+  write-only credential input, references, rotation refresh, and partial-write
+  cleanup. Rotation requires no consumer application redeploy.
+- [ ] Specify approval auditing/concurrency and reconciliation of runtime custom
+  entries with CI-managed baseline catalog configuration (ADR-0029).
+
+### 7. Deployment and observability
+
+- [ ] Configure Envoy Gateway routes, backend discovery/balancing, authentication,
+  forwarded metadata, and timeout settings; disable gateway generation retries.
+- [ ] Define shutdown/readiness timing and drain active streams plus disconnected
+  unary operations within original deadlines.
+- [ ] Configure automatic trace propagation/instrumentation, sampling, exporters,
+  safe metadata allowlists, telemetry retention, and best-effort monitoring.
+- [ ] Verify logs, traces, gateway access logs, and provider errors cannot emit
+  prompt/document/conversation/response bodies or credentials (ADR-0022).
+
+## Deferred beyond the first model service
+
+- Data/RAG, sessions, historical conversations, memory, and tooling APIs: schemas,
+  access boundaries, retention, storage, tool invocation, embedding integration,
+  ingestion, and reranking scope. The application decides when to record memory;
+  detailed discussion follows the first model service (ADR-0026).
+- Workflow-service orchestration.
+- Additional maintained language SDK wrappers, optional OpenAI-compatible HTTP
+  access, prompt substitution, structured-output emulation, and physical prompt
+  deletion, as deferred by the accepted ADRs.
