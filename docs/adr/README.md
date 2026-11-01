@@ -40,5 +40,6 @@ to hide history.
 | [0027](0027-prompt-equality-and-postgres-degradation.md) | Exact prompt deduplication and cached inference during PostgreSQL outages | Accepted |
 | [0028](0028-monthly-budgets-and-unmetered-model-approval.md) | Monthly spend caps and approved unmetered models | Accepted; accounting details partially deferred |
 | [0029](0029-custom-model-registration-and-secrets.md) | Organization-wide custom models with reviewed endpoints and secret references | Accepted; schema and secret backend partially deferred |
+| [0030](0030-go-workspace-and-model-bootstrap.md) | Go workspace, model service bootstrap, migrations, and local Compose | Accepted |
 
 See [open-questions.md](open-questions.md) for what is still undecided.

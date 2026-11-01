@@ -1,0 +1,22 @@
+name: ai-system
+
+include:
+  - model/compose.yaml
+
+services:
+  model:
+    build:
+      context: .
+      dockerfile: model/Dockerfile
+    environment:
+      MODEL_GRPC_ADDR: 0.0.0.0:50051
+    ports:
+      - "127.0.0.1:${MODEL_GRPC_PORT:-50051}:50051"
+    depends_on:
+      model-postgres:
+        condition: service_healthy
+      model-redis:
+        condition: service_healthy
+      model-migrate:
+        condition: service_completed_successfully
+    stop_grace_period: 15s

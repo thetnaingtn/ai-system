@@ -1,0 +1,41 @@
+services:
+  model-postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: model
+      POSTGRES_PASSWORD: model-local
+      POSTGRES_DB: model
+    ports:
+      - "127.0.0.1:${MODEL_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - model-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U model -d model"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  model-redis:
+    image: redis:8-alpine
+    ports:
+      - "127.0.0.1:${MODEL_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  model-migrate:
+    image: migrate/migrate:v4.20.1
+    volumes:
+      - ./migrations:/migrations:ro
+    command:
+      - -path=/migrations
+      - -database=postgres://model:model-local@model-postgres:5432/model?sslmode=disable&search_path=public
+      - up
+    depends_on:
+      model-postgres:
+        condition: service_healthy
+
+volumes:
+  model-postgres-data:
