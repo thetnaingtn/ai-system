@@ -11,6 +11,11 @@ as history; distributed coordination mechanics remain open.
 
 ## Context
 
+Later supersession: [ADR-0025](0025-performance-first-generation-recovery.md)
+permits bounded regeneration when an outcome cannot be recovered, accepting
+occasional duplicate generation. The original outcome-unknown/no-regeneration
+decision below is retained as history.
+
 A service can finish a generation but lose its connection before delivering the
 response. Retrying without operation identity may perform another billable
 generation. Avoiding duplicate execution alone is insufficient: the retry also

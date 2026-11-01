@@ -3,7 +3,16 @@
 Date: 2026-08-30
 Status: Partially deferred
 
+Follow-up: [ADR-0026](0026-storage-and-model-first-delivery.md) selects PostgreSQL
+for durable records and Redis for temporary state. Schema and store-outage/cache
+behavior remain open; the original storage alternatives below are historical.
+
 ## Context
+
+Later follow-up: [ADR-0027](0027-prompt-equality-and-postgres-degradation.md)
+ratifies serving cached configuration during a PostgreSQL outage, failing on
+missing required configuration and rejecting writes. The decision-needed wording
+below is historical; schema and cache implementation details remain open.
 
 Hard fail (ADR-0002) requires high availability, which requires stateless
 replicas. But the catalog and team policies are state. In-memory-only state

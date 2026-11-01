@@ -3,7 +3,18 @@
 Date: 2026-11-01
 Status: Accepted (implementation values and storage details deferred)
 
+Follow-up: [ADR-0025](0025-performance-first-generation-recovery.md) supersedes
+the no-regeneration rule for uncertain generation outcomes.
+[ADR-0026](0026-storage-and-model-first-delivery.md) selects PostgreSQL for durable
+records and Redis for temporary state. The original decisions below are retained
+as history; detailed schemas and outage behavior remain open.
+
 ## Context
+
+Later follow-ups: [ADR-0028](0028-monthly-budgets-and-unmetered-model-approval.md)
+settles monthly UTC budgets, exhaustion behavior, reservations, and unmetered
+approval. [ADR-0029](0029-custom-model-registration-and-secrets.md) adds the runtime
+custom-model catalog write path and reviewed endpoint/credential lifecycle.
 
 The user accepted tenant limits and production protection, selected best-effort
 availability for v1, and delegated remaining operational defaults. Earlier records
