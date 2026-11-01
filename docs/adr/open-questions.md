@@ -42,9 +42,17 @@ retention, fail closed without Redis, unknown-outcome errors rather than automat
 regeneration, and continued operation after transport disconnect until its
 original deadline. SDK cap clarified as two retries / three total attempts.
 
-Still open: explicit cancellation, atomic operation ownership and crash detection,
-Redis record-loss behavior, provider timeout/idempotency semantics, and safe retry
-contracts outside unary generation. Streaming replay is excluded from v1.
+Further settled by [ADR-0020](0020-unary-retry-waiting-and-cancellation.md): the SDK
+sends keys in gRPC metadata; changed content with the same key is rejected; retries
+wait for the original running generation within the original deadline or return
+its saved answer through `Generate()`. No separate retrieval API in v1. Explicit
+caller cancellation triggers best-effort server/provider cancellation; repeated
+cancellation is safe and completed answers remain preserved.
+
+Still open: atomic operation ownership, cross-replica waiting/cancellation and
+crash detection, fingerprint normalization, Redis record-loss behavior, provider
+timeout/idempotency semantics, cancellation RPC details, and safe retry contracts
+outside unary generation. Streaming replay is excluded from v1.
 
 ### Streaming API shape
 Channel, iterator, or callback? How are `ABORTED` + `partial: true` (ADR-0008)

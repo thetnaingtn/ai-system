@@ -3,6 +3,12 @@
 Date: 2026-10-04
 Status: Accepted (explicit cancellation and recovery mechanics partially deferred)
 
+Follow-up: [ADR-0020](0020-unary-retry-waiting-and-cancellation.md) resolves the
+explicit cancellation contract, metadata-based key transport, rejection of changed
+request content, waiting for running operations, and recovery through `Generate()`
+without a separate retrieval API. The original deferred items below are retained
+as history; distributed coordination mechanics remain open.
+
 ## Context
 
 A service can finish a generation but lose its connection before delivering the

@@ -7,7 +7,10 @@ Later clarification and partial supersession:
 [ADR-0019](0019-unary-idempotency-and-recovery.md) defines the SDK cap as two
 retries (three total attempts), requires protection for uncertain execution, and
 supersedes cancellation propagation for unary transport disconnects. The original
-decision below is retained as history; explicit caller cancellation remains open.
+decision below is retained as history. Explicit caller cancellation is settled by
+[ADR-0020](0020-unary-retry-waiting-and-cancellation.md) as a best-effort separate
+cancellation request; it does not reinstate unconditional RPC cancellation
+propagation for transport disconnects.
 
 ## Context
 
