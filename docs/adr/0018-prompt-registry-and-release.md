@@ -3,6 +3,8 @@
 Date: 2026-10-04
 Status: Accepted
 
+Follow-up: [ADR-0023](0023-model-feature-and-prompt-defaults.md). settles explicit first release, explicit scope lookup, and deferral of physical deletion. Content equality and detailed concurrency contracts remain implementation work.
+
 ## Context
 
 Teams need centrally stored system prompts without requiring an application

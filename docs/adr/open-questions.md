@@ -1,157 +1,74 @@
 # Open questions
 
-Ordered by what blocks what. Settled decisions live in the numbered ADRs.
+Updated: 2026-11-01
 
-## Proto-shaped — cheap now, breaking later
+The five product/operating questions discussed with the owner have been answered.
+The remaining technical defaults were delegated and are recorded in ADR-0021
+through ADR-0024. This does not mean every implementation contract or service API
+is complete. The items below distinguish settled policy from remaining design work.
 
-### Transport for the client edge
-Deferred. Model service to internal services (data service, workflow service) is
-gRPC and not in question. The client edge is open.
+## Settled policy and technical defaults
 
-The strong argument for HTTP is not the usual one: having adopted OpenAI's shape
-(ADR-0016), exposing `POST /v1/chat/completions` with OpenAI-compatible bodies
-means the `openai` package, LangChain, LiteLLM, Instructor, notebooks and eval
-harnesses point at the platform by changing one string — and Python and TypeScript
-teams need no SDK from us at all.
+| Original topic | Decision / record |
+|---|---|
+| Client transport | Protobuf/gRPC across languages; optional HTTP compatibility later. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Structured-output emulation | Deferred beyond v1; native support only initially. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
+| Reasoning effort | Provider-specific passthrough. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
+| Tool-conversation fallback | Pin by default; explicit tenant-policy opt-out. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
+| Parallel-tool restriction | Typed error on violation before exposing executable calls. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
+| Q15: idempotency | Same-key retry recovery, Redis result retention, waiting, explicit best-effort cancellation, and no retrieval API. [ADR-0019](0019-unary-idempotency-and-recovery.md), [ADR-0020](0020-unary-retry-waiting-and-cancellation.md); coordination defaults in [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| Streaming API | Iterator-style wrapper with close, terminal errors, and partial-output reporting. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Error taxonomy | Typed SDK errors plus gRPC status and structured details. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Scope beyond generation | Model service remains focused; RAG, sessions, conversations, and memory belong to data, with tooling exposure and application-owned memory decisions. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Q21: prompt/model quality compatibility | Team-owned; per-call fallback disabling is sufficient for v1. [ADR-0018](0018-prompt-registry-and-release.md) |
+| Q23: prompt versioning | Immutable revisions, separate conflict-checked releases, default stable tag. [ADR-0018](0018-prompt-registry-and-release.md); explicit first release and scope lookup in [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
+| Q24: templating | No platform substitution in v1. [ADR-0018](0018-prompt-registry-and-release.md) |
+| Logging and PII | Prohibit content in diagnostic logs/traces; keep functional storage separate. [ADR-0022](0022-envoy-gateway-observability-and-content-privacy.md) |
+| Q13: graceful drain | Drain streams and disconnected running operations within deadlines. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| Q14: load balancing | Envoy Gateway owns backend routing/balancing. [ADR-0022](0022-envoy-gateway-observability-and-content-privacy.md) |
+| Q16: timeout alignment | Original operation deadline, bounded attempts, infrastructure margin. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| Q25: pricing metadata | Platform-owned reviewed updates; missing price is unknown, not zero. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| Catalog write path | Reviewed configuration published by CI. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| Incident fast path | Authorized, audited target-disable override expiring after 24 hours. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| Q26: lazy initialization | One shared client per namespace; recover transient failures; clear configuration errors. [ADR-0017](0017-platform-sdk-service-namespaces.md), [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Q11: second language | Any supported protobuf/gRPC client language can call services; wrapper coverage is separate. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Proto versus domain types | Generated types plus small behavior/stream/error wrappers. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Testing | Fake services and injectable client interfaces. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Observability | Automatic platform instrumentation and standard trace propagation, with optional application custom spans. [ADR-0022](0022-envoy-gateway-observability-and-content-privacy.md) |
+| API versioning | Versioned protobuf packages, additive evolution, compatibility checks. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Budget caps | V1 tenant limits, experimental caps, production protection, configurable spend ceilings. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
+| SLO and on-call | Best-effort v1; no contractual availability promise or 24/7 commitment. [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md) |
 
-The decision that sets the scope: **drop-in compatible** (their exact error
-envelope, `finish_reason` values, SSE framing, HTTP status semantics; our own
-fields — `resolution`, `degraded` — hidden in extensions their clients ignore) or
-**REST-shaped with our own schema** (cleaner, and the ecosystem argument is gone).
-There is no useful middle: "almost compatible" fails in a different place for every
-tool.
+## Remaining design and implementation work
 
-Note grpc-gateway does not produce this. protojson base64-encodes `bytes` (breaking
-`arguments`), field and enum encoding follow protobuf-JSON conventions, and
-OpenAI's SSE framing including `data: [DONE]` is not something a gateway emits. An
-OpenAI-compatible surface is a hand-written handler over a shared domain core.
+- **Durable storage and degradation (ADR-0013):** select the catalog/policy/prompt
+  store and schema; ratify stale-cache behavior, cache misses, cold starts, and
+  authorization/policy refresh during outages. Redis recovery storage does not
+  settle durable storage.
+- **Unary recovery (Q15):** define atomic claim/completion transitions, owner lease
+  durations, fingerprint normalization, waiter notification, cancellation routing,
+  and completion/cancellation race ordering. Specify unknown-outcome detection,
+  non-completed-record retention, Redis failover/record loss, and provider
+  timeout/idempotency behavior. Keep unsafe replay disabled. Determine safe retry
+  contracts for service writes beyond generation.
+- **Tenant protection:** choose quotas, token/concurrency accounting, spend
+  reservations and reconciliation, production capacity allocation, unknown-price
+  behavior, and outages of enforcement state. These must meet ADR-0024's protection
+  policy rather than silently reverting to unlimited use.
+- **Data, sessions, memory, and tools:** specify schemas, access boundaries,
+  lifecycle/retention, tool invocation, and service-owned storage contracts.
+  Determine embedding integration, ingestion, and reranking scope and release
+  sequencing. The application owns deciding when to write memory.
+- **Cross-language experience:** choose the platform-wrapper release matrix and
+  packaging; generated clients alone do not implement automatic platform behavior.
+  Finalize streaming signatures and typed errors per supported wrapper language.
+- **Prompt details:** content equality/canonicalization, concurrent registration,
+  expected-absent first-release encoding, reference tracking, and later physical
+  deletion design. Exact revisions and tags remain as already decided.
+- **Deployment and telemetry:** Envoy route/security policies, timeouts and drain
+  margins, trace sampling/exporters, safe metadata allowlists, telemetry retention,
+  and monitoring for best-effort operations. Ensure logging/exception paths cannot
+  emit content prohibited by ADR-0022.
 
-If HTTP happens, ADR-0001 is amended: the SDK becomes the typed door for Go
-services rather than the only door.
-
-### Carried from ADR-0015 and ADR-0016
-- Is structured-output emulation in v1, or does v1 ship `native | none`?
-- Is reasoning effort a normalized enum or vendor passthrough?
-- Is `pin` ratified as the tool-conversation fallback default?
-- Behavior when a provider ignores the parallel-tool-calls toggle.
-
-### Q15. Idempotency key
-Partially settled by [ADR-0019](0019-unary-idempotency-and-recovery.md): shared
-keys across unary attempts, Redis-backed result replay, 10-minute completed-result
-retention, fail closed without Redis, unknown-outcome errors rather than automatic
-regeneration, and continued operation after transport disconnect until its
-original deadline. SDK cap clarified as two retries / three total attempts.
-
-Further settled by [ADR-0020](0020-unary-retry-waiting-and-cancellation.md): the SDK
-sends keys in gRPC metadata; changed content with the same key is rejected; retries
-wait for the original running generation within the original deadline or return
-its saved answer through `Generate()`. No separate retrieval API in v1. Explicit
-caller cancellation triggers best-effort server/provider cancellation; repeated
-cancellation is safe and completed answers remain preserved.
-
-Still open: atomic operation ownership, cross-replica waiting/cancellation and
-crash detection, fingerprint normalization, Redis record-loss behavior, provider
-timeout/idempotency semantics, cancellation RPC details, and safe retry contracts
-outside unary generation. Streaming replay is excluded from v1.
-
-### Streaming API shape
-Channel, iterator, or callback? How are `ABORTED` + `partial: true` (ADR-0008)
-surfaced to a developer?
-
-### Error taxonomy
-Raw gRPC status codes, or typed errors (`ErrRateLimited`, `ErrContentFiltered`,
-`ErrChainExhausted`)? Teams will branch on whatever ships, permanently.
-ADR-0007 makes this part of the public contract.
-
-### Scope beyond generation
-Embeddings? Reranking? If they are coming, the service shape should anticipate
-them.
-
-## Correctness and safety
-
-### Q21. Prompt x model binding
-Settled for v1 by [ADR-0018](0018-prompt-registry-and-release.md): teams own
-quality compatibility and evaluations. No prompt-specific model compatibility
-list; per-call fallback disabling is sufficient. Technical capability enforcement
-continues to apply.
-
-### Q23. Prompt versioning
-Settled by [ADR-0018](0018-prompt-registry-and-release.md): platform-assigned
-immutable revisions, identical-content deduplication, default `stable` selection,
-exact revision pinning, and separate releases with expected-revision conflict
-checks. Tenant and platform-owned organization scopes are supported. Authorized
-application backends can register and release; those permissions are separate.
-First-release mechanics and deletion/retention remain open.
-
-### Q24. Templating
-Settled for v1 by [ADR-0018](0018-prompt-registry-and-release.md): store plain
-system prompt text, with teams constructing changing request messages. No platform
-substitution. Template support, engine choice, and variable validation are deferred
-to a later version. Registered and inline system prompts are mutually exclusive.
-
-### Logging and PII
-Never asked, and the one that becomes a compliance incident. Are prompt and
-response bodies logged? They contain customer data. If yes: retention, access
-control, redaction. If no: how does anyone debug a bad generation?
-
-## Operational
-
-- **Q13. Graceful drain.** Rolling deploys sever in-flight streams unless
-  `preStop` plus termination grace period exceed the longest generation.
-  Kubernetes does not handle this for streams by default.
-- **Q14. gRPC load balancing.** Long-lived HTTP/2 connections pin to one replica;
-  naive L4 balancing produces hotspots, made worse by lazy init dialing in
-  lockstep at deploy time. Client-side round-robin with a resolver, a gRPC-aware
-  proxy, or a mesh?
-- **Q16. Timeout alignment.** Ingress, load balancer, gRPC keepalive, and provider
-  client each have idle timeouts. Any one below p99 generation time produces
-  phantom mid-stream disconnects that look like provider flakiness.
-- **Q25. Pricing metadata.** Who updates it when providers change prices, and does
-  a missing price silently report as zero cost in chargeback?
-- **Catalog write path.** Team policy goes through `policy apply` (ADR-0010). The
-  platform catalog itself — reviewed config file, or an RPC? If an RPC, at
-  minimum log who registered what.
-- **Incident fast path.** One narrow operational verb — disable a target in a
-  chain — writing straight to the store, loudly audited, auto-expiring after 24h
-  so it cannot become silent config drift.
-
-## SDK internals
-
-### Q26. Lazy initialization
-Partially settled by [ADR-0017](0017-platform-sdk-service-namespaces.md): access
-to a namespace instantiates one shared gRPC client per platform instance, including
-under concurrent access. Construction does not require backend readiness.
-
-Still open: client-construction failure handling and connection recovery. A
-transient failure must not accidentally become a permanently cached failure; the
-precise contract has not yet been ratified.
-
-Lazy init also trades startup failure for call-time failure: bad credentials
-surface on a user-facing request instead of at boot, where the process could
-crash-loop safely. What made that trade worth it?
-
-### Q11. Second language
-Never answered. Determines whether the gRPC hop is earning its keep beyond
-centralization (ADR-0001), and multiplies the SDK and type-translation work.
-
-### Proto vs domain types
-Return `protoc-gen-go` types directly (the SDK is a constructor and a
-pass-through), or hand-write domain types and translate (a translation layer
-maintained in lockstep with every proto change, in every language)? If the
-second, name the specific ergonomic gain — `oneof` handling, optional-field
-semantics, hiding streaming behind an iterator.
-
-## Not yet asked, but needed
-
-- **Testing.** How does a team write tests without hitting real providers and
-  burning tokens? A record/replay mode or a fake provider in the SDK is the
-  difference between teams adopting this and teams wrapping it in their own
-  abstraction.
-- **Observability.** Trace propagation through gRPC metadata so an LLM call is a
-  span in the caller's existing traces. Cheap by design, painful to retrofit.
-- **API versioning.** How does `Generate` evolve once many teams depend on it?
-- **Budget caps.** Per-team spend ceiling — deferred with the shared key
-  (ADR-0003), same lever.
-- **SLO and on-call.** ADR-0002 commits the platform team to being a synchronous
-  dependency of every AI feature. What is the published SLO, and who carries the
-  pager?
+Some of these details may reveal product tradeoffs. The delegated defaults do not
+silently authorize changes to the accepted scope, privacy, or availability policy.

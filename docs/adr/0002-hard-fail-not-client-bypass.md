@@ -3,6 +3,8 @@
 Date: 2026-08-30
 Status: Accepted
 
+Follow-up: [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md). supersedes the mandatory 24/7 on-call and SLO commitment for v1 with best-effort availability. The hard-fail/no-bypass decision remains in force.
+
 ## Context
 
 Centralizing LLM calls introduces a single point of failure that did not exist

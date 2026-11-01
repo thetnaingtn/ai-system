@@ -31,5 +31,9 @@ to hide history.
 | [0018](0018-prompt-registry-and-release.md) | Immutable prompt revisions with separate, authorized releases | Accepted |
 | [0019](0019-unary-idempotency-and-recovery.md) | Unary retry recovery uses Redis records and bounded operations | Accepted; cancellation and mechanics partially deferred |
 | [0020](0020-unary-retry-waiting-and-cancellation.md) | Unary retries wait for the original operation; cancellation is best effort | Accepted; coordination mechanics partially deferred |
+| [0021](0021-service-boundaries-and-sdk-contracts.md) | Service boundaries and language-independent SDK contracts | Accepted |
+| [0022](0022-envoy-gateway-observability-and-content-privacy.md) | Envoy Gateway and automatic observability without content logging | Accepted |
+| [0023](0023-model-feature-and-prompt-defaults.md) | V1 model features and remaining prompt defaults | Accepted |
+| [0024](0024-v1-operating-policy-and-recovery-defaults.md) | V1 operating policy, tenant protection, and recovery defaults | Accepted; implementation details deferred |
 
 See [open-questions.md](open-questions.md) for what is still undecided.

@@ -3,6 +3,8 @@
 Date: 2026-10-04
 Status: Accepted (initialization failure behavior partially deferred)
 
+Follow-up: [ADR-0021](0021-service-boundaries-and-sdk-contracts.md). resolves initialization failure policy and service boundaries; ADR-0022 chooses Envoy Gateway and automatic platform observability. The original deferred list below is retained as history.
+
 ## Context
 
 The platform is broader than the model service. Teams within the organization

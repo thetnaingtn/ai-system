@@ -3,6 +3,8 @@
 Date: 2026-09-06
 Status: Accepted
 
+Follow-up: [ADR-0023](0023-model-feature-and-prompt-defaults.md). ratifies pinning as the default and requires a typed error when a provider violates a requested parallel-tool restriction. The original unratified items below are retained as history.
+
 ## Context
 
 Tool calling is the hardest part of a uniform interface. Tool schemas, tool-call

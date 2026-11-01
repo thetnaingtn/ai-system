@@ -3,6 +3,8 @@
 Date: 2026-09-06
 Status: Accepted
 
+Follow-up: [ADR-0023](0023-model-feature-and-prompt-defaults.md). settles the v1 choices: defer structured-output emulation and retain provider-specific reasoning parameters. The original unratified discussion below is retained as history.
+
 ## Context
 
 The platform promises one interface across OpenAI, Anthropic, and self-hosted

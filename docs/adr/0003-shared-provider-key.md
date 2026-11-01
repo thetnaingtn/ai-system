@@ -3,6 +3,8 @@
 Date: 2026-08-30
 Status: Accepted (known limitation)
 
+Follow-up: [ADR-0024](0024-v1-operating-policy-and-recovery-defaults.md). supersedes recording-only tenant usage with enforced v1 limits and production protection. Shared provider keys remain in force; the original limitation below is retained as history.
+
 ## Context
 
 The service holds provider credentials on behalf of all tenants. Keys can be
