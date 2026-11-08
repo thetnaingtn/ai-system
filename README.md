@@ -3,6 +3,9 @@
 Go monorepo for the AI platform. The first service is the model service; design
 decisions are recorded in [docs/adr](docs/adr/README.md).
 
+The proposed schemas, tables, columns, and constraints are documented in the
+[AI platform data model](docs/ai-platform-data-model.md).
+
 ```text
 go.mod                  Shared contract module (github.com/thetnaingtn/ai-system)
 go.work                 Workspace and shared dependency selection
