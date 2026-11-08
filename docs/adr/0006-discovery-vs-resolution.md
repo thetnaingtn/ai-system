@@ -3,6 +3,10 @@
 Date: 2026-08-30
 Status: Accepted
 
+Follow-up: [ADR-0031](0031-model-names-without-snapshots.md) replaces snapshot
+reporting with requested and actual model name reporting. The discovery and
+resolution separation remains accepted.
+
 ## Context
 
 `ListModels` (what models exist) and chain resolution (which model serves this

@@ -1,6 +1,6 @@
 # Open questions
 
-Updated: 2026-11-01
+Updated: 2026-11-08
 
 The five product/operating questions discussed with the owner have been answered.
 The remaining technical defaults were delegated and are recorded in ADR-0021
@@ -13,12 +13,17 @@ selects PostgreSQL/Redis, Go SDK delivery, and model-service-first sequencing.
 and PostgreSQL outage behavior; [ADR-0028](0028-monthly-budgets-and-unmetered-model-approval.md)
 settles monthly budgets and approved unmetered models; [ADR-0029](0029-custom-model-registration-and-secrets.md)
 settles organization-wide custom models, endpoint updates, and managed credentials.
+[ADR-0031](0031-model-names-without-snapshots.md) removes the separate model
+snapshot concept: all clients use the same real model name, which is also sent
+to the provider. Separate catalog aliases and client-specific model names are
+excluded; configuration versions do not guarantee immutable underlying models.
 
 ## Settled policy and technical defaults
 
 | Original topic | Decision / record |
 |---|---|
 | Client transport | Protobuf/gRPC across languages; optional HTTP compatibility later. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Model selection | One shared real model name, also sent to the provider; no separate aliases, snapshots, or snapshot-pinning API. [ADR-0031](0031-model-names-without-snapshots.md) |
 | Structured-output emulation | Deferred beyond v1; native support only initially. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
 | Reasoning effort | Provider-specific passthrough. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
 | Tool-conversation fallback | Pin by default; explicit tenant-policy opt-out. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |

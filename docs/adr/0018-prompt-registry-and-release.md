@@ -3,6 +3,10 @@
 Date: 2026-10-04
 Status: Accepted
 
+Later follow-up: [ADR-0031](0031-model-names-without-snapshots.md) removes model
+snapshot selection and supersedes the snapshot-based evaluation guidance below.
+Immutable prompt revisions and release semantics remain accepted.
+
 Follow-up: [ADR-0023](0023-model-feature-and-prompt-defaults.md). settles explicit first release, explicit scope lookup, and deferral of physical deletion. Content equality and detailed concurrency contracts remain implementation work.
 
 ## Context
