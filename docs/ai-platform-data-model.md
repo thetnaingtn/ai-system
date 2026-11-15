@@ -631,8 +631,7 @@ operations and audit retention remains open.
 ## Remaining design work
 
 The tenant/model migrations create tenants before models to satisfy the ownership
-FK and reverse that order on rollback. Run `make test-migrations` to verify the
-upgrade, constraints, rollback, and reapply in disposable PostgreSQL.
+FK and reverse that order on rollback.
 Next: define model registration and discovery API contracts and storage access.
 Do not implement the other draft tables merely because they appear in this file.
 

@@ -91,16 +91,8 @@ make build
 make test
 make race
 make vet
-make test-migrations
 git diff --check
 ```
-
-`make test-migrations` requires Docker and runs the pinned migration image against
-a disposable PostgreSQL 18 container. It verifies upgrade from the bootstrap,
-defaults, key constraints, rollback, reapply, and repeat-up behavior. The container
-publishes no host ports, uses no development volumes, and is removed on completion.
-The ordinary test and race targets skip this integration test unless
-`MODEL_MIGRATION_TEST=1` is set.
 
 `go.work` selects local modules together; `go work sync` writes selected shared
 dependency versions back to each module's `go.mod`. Commit module manifests and

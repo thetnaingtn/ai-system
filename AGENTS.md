@@ -41,7 +41,6 @@ Run from the repository root:
 - `make vet` — run standard static checks.
 - `make sync` — synchronize workspace dependency selection.
 - `make tools` — install the pinned migration CLI into `bin/`.
-- `make test-migrations` — verify migrations and constraints in disposable PostgreSQL via Docker.
 - `docker compose up --build -d` — start the local stack and apply migrations.
 - `gofmt -w path/to/file.go` — format changed Go files.
 - `git diff --check` — catch whitespace errors in tracked changes.
