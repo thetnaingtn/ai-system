@@ -13,6 +13,8 @@ This repository is a Go workspace monorepo. The root module is
 - Root `buf.yaml`/`buf.gen.yaml` configure Buf 1.75.0; generator versions are
   managed by Go module `tool` directives and invoked through `go tool`.
 - `model/cmd/main.go` is the model service entry point (gRPC process health only).
+- `model/internal/handler/model.go` contains unregistered model-management RPC
+  stubs, each with `panic("not implemented")`.
 - `model/migrations/` holds golang-migrate SQL pairs.
 - Root `compose.yaml` starts the model service and includes `model/compose.yaml`
   for PostgreSQL, Redis, and migrations.
@@ -20,7 +22,7 @@ This repository is a Go workspace monorepo. The root module is
 - `docs/adr/open-questions.md` tracks remaining model-service implementation work.
 - `.agents/skills/` contains repository-local agent skills.
 
-Application RPC handlers, provider/storage integration, ergonomic SDK wrappers,
+Application RPC behavior, provider/storage integration, ergonomic SDK wrappers,
 and production deployment manifests have not been added yet. Establish their
 layout explicitly during implementation. Keep generated contracts separate from
 the handwritten SDK wrappers and do not edit generated files directly.

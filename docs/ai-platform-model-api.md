@@ -1,7 +1,8 @@
 # Model-management API
 
 Updated: 2026-11-15
-Status: Initial protobuf contract; handlers and authentication are not implemented.
+Status: Initial protobuf contract with unregistered panic-only handler stubs;
+RPC behavior and authentication are not implemented.
 
 Sources: `proto/platform/model/v1/`. Protobuf package: `platform.model.v1`.
 Service: `platform.model.v1.ModelService`. Generated Go package:

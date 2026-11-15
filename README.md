@@ -115,6 +115,12 @@ Model-management sources live in `proto/platform/model/v1/`. Generated Go types
 and gRPC interfaces live in `gen/go/platform/model/v1/`; handlers are not yet
 registered on the service.
 
+`model/internal/handler/model.go` implements the generated server interface with
+`panic("not implemented")` placeholders for all nine RPCs. The model module
+references the root contracts through a local module replacement; the Docker build
+includes the root manifests and generated code. The running process stays
+health-only until authenticated RPC behavior is implemented.
+
 ```sh
 make proto-tools
 make proto-format

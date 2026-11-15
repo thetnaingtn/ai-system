@@ -2,7 +2,10 @@ module github.com/thetnaingtn/ai-system/model
 
 go 1.26.3
 
-require google.golang.org/grpc v1.83.2
+require (
+	github.com/thetnaingtn/ai-system v0.0.0
+	google.golang.org/grpc v1.83.2
+)
 
 require (
 	golang.org/x/net v0.58.0 // indirect
@@ -11,3 +14,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 )
+
+replace github.com/thetnaingtn/ai-system => ..
