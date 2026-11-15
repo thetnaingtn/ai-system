@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package platform.model.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/thetnaingtn/ai-system/gen/go/platform/model/v1;modelv1";
+
+// ModelStatus describes catalog lifecycle, independently of approval.
+enum ModelStatus {
+  MODEL_STATUS_UNSPECIFIED = 0;
+  MODEL_STATUS_ACTIVE = 1;
+  MODEL_STATUS_DEPRECATED = 2;
+  MODEL_STATUS_SUNSET = 3;
+}
+
+// ApprovalStatus describes a registration or proposed change's review state.
+enum ApprovalStatus {
+  APPROVAL_STATUS_UNSPECIFIED = 0;
+  APPROVAL_STATUS_PENDING = 1;
+  APPROVAL_STATUS_APPROVED = 2;
+  APPROVAL_STATUS_REJECTED = 3;
+}
+
+// AccountingMode determines whether usage counts toward provider-spend budgets.
+enum AccountingMode {
+  ACCOUNTING_MODE_UNSPECIFIED = 0;
+  ACCOUNTING_MODE_METERED = 1;
+  ACCOUNTING_MODE_UNMETERED = 2;
+}
+
+// ModelView selects discovery metadata or authorized management configuration.
+enum ModelView {
+  MODEL_VIEW_UNSPECIFIED = 0;
+  MODEL_VIEW_BASIC = 1;
+  MODEL_VIEW_CONFIGURATION = 2;
+}
+
+// ModelCapabilities describes native model support. All fields must be present
+// in a complete configuration, including explicitly false feature flags.
+message ModelCapabilities {
+  optional bool tools = 1;
+  optional bool structured_output = 2;
+  optional bool streaming = 3;
+  optional bool vision = 4;
+  // Required and positive. Application validation also checks adapter support.
+  optional int64 max_context_tokens = 5;
+}
+
+// Model is safe discovery metadata. It contains no endpoint URL, credential,
+// secret reference, fallback policy, alias, or model snapshot.
+message Model {
+  // Globally unique real model name, also sent unchanged to the provider.
+  string name = 1;
+  string provider = 2;
+  ModelCapabilities capabilities = 3;
+  ModelStatus status = 4;
+  google.protobuf.Timestamp sunset_at = 5;
+  optional string replacement_model = 6;
+  AccountingMode accounting_mode = 7;
+  ApprovalStatus approval_status = 8;
+  // Canonical UUID. Absent for a platform-owned model; does not grant access.
+  optional string owner_tenant_id = 9;
+  // Positive PostgreSQL bigint configuration revision, not a model snapshot.
+  int64 config_version = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+}
+
+// ModelConfiguration is the writable, nonsecret configuration. Reading endpoint
+// configuration requires owner or platform management permission. Credentials and
+// secret references are deliberately excluded from this message.
+message ModelConfiguration {
+  // Identifies the model for updates; cannot be renamed through an update mask.
+  string name = 1;
+  string provider = 2;
+  string base_url = 3;
+  ModelCapabilities capabilities = 4;
+  // Registration defaults UNSPECIFIED to ACTIVE; masked updates require a value.
+  ModelStatus status = 5;
+  google.protobuf.Timestamp sunset_at = 6;
+  // Clear this field through an explicit update mask, not an empty model name.
+  optional string replacement_model = 7;
+  // Must be explicit on registration. UNMETERED requires platform approval.
+  AccountingMode accounting_mode = 8;
+}

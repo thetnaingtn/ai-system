@@ -70,6 +70,12 @@ model service against the accepted ADRs.
 
 ### 1. API contracts and Go SDK
 
+The initial model-management contract is defined under `proto/platform/model/v1/`
+and generated into `gen/go/platform/model/v1/`, using Buf and Go module tools
+(ADR-0034). It covers registration, discovery, version-checked updates, review,
+and credential rotation. Handlers, write-replay persistence, and authentication
+remain unimplemented; generation/prompts/policies contracts remain open.
+
 - [ ] Finalize versioned protobuf messages and RPCs for generation/streaming,
   prompts/releases, discovery, policies, model registration/approval/update,
   credential rotation, and explicit cancellation.

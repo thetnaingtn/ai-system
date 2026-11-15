@@ -5,11 +5,16 @@ decisions are recorded in [docs/adr](docs/adr/README.md).
 
 The proposed schemas, tables, columns, and constraints are documented in the
 [AI platform data model](docs/ai-platform-data-model.md).
+The initial protobuf contract is described in the
+[model-management API design](docs/ai-platform-model-api.md).
 
 ```text
 go.mod                  Shared contract module (github.com/thetnaingtn/ai-system)
 go.work                 Workspace and shared dependency selection
 proto/                  Shared protobuf sources, grouped by service/version
+buf.yaml                Buf module, lint, and compatibility configuration
+buf.gen.yaml            Go message and gRPC generation through go tool
+gen/go/                 Committed generated Go contracts (root module)
 compose.yaml            Local service orchestration
 model/
   go.mod                Model service module
@@ -19,7 +24,8 @@ model/
   migrations/           Sequential golang-migrate SQL files
 ```
 
-Requires Go 1.26.3 and Docker Compose 2.20.3 or later.
+Requires Go 1.26.3 and Docker Compose 2.20.3 or later. Protobuf development uses
+the separately installed Buf CLI 1.75.0.
 
 ## Run with Docker
 
@@ -99,7 +105,26 @@ dependency versions back to each module's `go.mod`. Commit module manifests and
 checksums as well as workspace changes. After changing dependencies, run
 `go mod tidy` in the owning module and `make sync` from the root.
 
-Root Make targets currently check the model module. Root `go test ./...` does not
-include nested modules. Add new service modules with `go work use ./<service>`
-and extend the Make targets. Protobuf contracts and generation commands will be
-introduced together; see [proto/README.md](proto/README.md).
+Root Make targets check both shared generated contracts and the model module.
+Root `go test ./...` does not include nested modules. Add new service modules with
+`go work use ./<service>` and extend the Make targets.
+
+## Protobuf
+
+Model-management sources live in `proto/platform/model/v1/`. Generated Go types
+and gRPC interfaces live in `gen/go/platform/model/v1/`; handlers are not yet
+registered on the service.
+
+```sh
+make proto-tools
+make proto-format
+make proto-generate
+make proto-check
+# Once main contains the initial contract baseline:
+make proto-breaking
+```
+
+Generator versions are recorded as Go module tools, so Buf invokes `go tool`
+without standalone plugin installation. The protobuf workflow checks formatting,
+lint, generation freshness, Go compilation, and compatibility. See
+[proto/README.md](proto/README.md) for toolchain and baseline details.

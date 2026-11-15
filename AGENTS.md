@@ -8,7 +8,10 @@ This repository is a Go workspace monorepo. The root module is
 
 - `go.mod` declares Go 1.26.3.
 - `go.work` selects the root and model modules; run `go work sync` after changing dependencies.
-- `proto/` holds shared protobuf contracts; application contracts are not generated yet.
+- `proto/platform/model/v1/` holds the model-management contract; `gen/go/` holds
+  committed Go messages and gRPC interfaces in the root module.
+- Root `buf.yaml`/`buf.gen.yaml` configure Buf 1.75.0; generator versions are
+  managed by Go module `tool` directives and invoked through `go tool`.
 - `model/cmd/main.go` is the model service entry point (gRPC process health only).
 - `model/migrations/` holds golang-migrate SQL pairs.
 - Root `compose.yaml` starts the model service and includes `model/compose.yaml`
@@ -17,9 +20,10 @@ This repository is a Go workspace monorepo. The root module is
 - `docs/adr/open-questions.md` tracks remaining model-service implementation work.
 - `.agents/skills/` contains repository-local agent skills.
 
-Application RPCs, provider/storage integration, SDKs, production deployment
-manifests, and generated protobuf code have not been added yet. Establish their
-layout explicitly during implementation.
+Application RPC handlers, provider/storage integration, ergonomic SDK wrappers,
+and production deployment manifests have not been added yet. Establish their
+layout explicitly during implementation. Keep generated contracts separate from
+the handwritten SDK wrappers and do not edit generated files directly.
 
 ## Architecture & Decision Records
 
@@ -35,19 +39,24 @@ records supersede earlier decisions where stated. Add sequential records such as
 
 Run from the repository root:
 
-- `make build` — compile the model service into `bin/model`.
-- `make test` — run service tests.
+- `make build` — compile root contract packages and the model service into `bin/model`.
+- `make test` — run root and service tests.
 - `make race` — check concurrent code for data races.
 - `make vet` — run standard static checks.
 - `make sync` — synchronize workspace dependency selection.
 - `make tools` — install the pinned migration CLI into `bin/`.
+- `make proto-tools` — check Buf and resolve/run the pinned Go generation tools.
+- `make proto-generate` — regenerate committed Go messages and gRPC interfaces.
+- `make proto-check` — check protobuf build/lint/format and generated freshness.
+- `make proto-breaking` — compare contracts against main (after its first baseline).
 - `docker compose up --build -d` — start the local stack and apply migrations.
 - `gofmt -w path/to/file.go` — format changed Go files.
 - `git diff --check` — catch whitespace errors in tracked changes.
 
 Root `go test ./...` does not traverse nested modules. Extend Make targets when
-adding modules. See README.md for host startup and migration commands. There is
-no configured lint pipeline or protobuf-generation toolchain yet.
+adding modules. See README.md for host startup, migration, and generation commands.
+The protobuf workflow enforces schema checks, generation freshness, compilation,
+and compatibility; a general application lint pipeline is not configured yet.
 
 ## Coding Style & Naming Conventions
 

@@ -273,7 +273,7 @@ requests. It preserves the active configuration while review is pending.
 |---|---|---|---|
 | `id` | `uuid` | No | Primary key |
 | `model_name` | `text` | No | FK to the model being registered or changed |
-| `change_type` | `text` | No | Proposed values: `registration`, `endpoint_change`, `unmetered_request` |
+| `change_type` | `text` | No | Proposed values aligned with the API: `registration`, `endpoint_change`, `accounting_mode_change` |
 | `expected_config_version` | `bigint` | No | Model revision on which the proposal was based |
 | `proposed_config` | `jsonb` | No | Validated proposed fields; secret references only |
 | `status` | `model_catalog.approval_status` | No | `pending`, `approved`, or `rejected` |

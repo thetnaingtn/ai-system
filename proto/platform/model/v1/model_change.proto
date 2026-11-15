@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package platform.model.v1;
+
+import "google/protobuf/timestamp.proto";
+import "platform/model/v1/model.proto";
+
+option go_package = "github.com/thetnaingtn/ai-system/gen/go/platform/model/v1;modelv1";
+
+// ModelChangeType identifies the reason a proposed configuration needs review.
+enum ModelChangeType {
+  MODEL_CHANGE_TYPE_UNSPECIFIED = 0;
+  MODEL_CHANGE_TYPE_REGISTRATION = 1;
+  MODEL_CHANGE_TYPE_ENDPOINT_CHANGE = 2;
+  MODEL_CHANGE_TYPE_ACCOUNTING_MODE_CHANGE = 3;
+}
+
+// ModelChange is visible only to authorized owners and platform reviewers.
+// Proposed configuration must never replace the active configuration before
+// approval. Credentials and secret references are never returned.
+message ModelChange {
+  // Server-generated canonical UUID, immutable for the lifetime of the proposal.
+  string id = 1;
+  string model_name = 2;
+  ModelChangeType type = 3;
+  ModelConfiguration proposed_configuration = 4;
+  // Model revision against which the proposal was prepared.
+  int64 expected_config_version = 5;
+  ApprovalStatus approval_status = 6;
+  // Authenticated principal identifiers, not client-supplied display names.
+  string requested_by = 7;
+  optional string reviewed_by = 8;
+  optional string decision_reason = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp decided_at = 11;
+}
