@@ -42,5 +42,6 @@ to hide history.
 | [0029](0029-custom-model-registration-and-secrets.md) | Organization-wide custom models with reviewed endpoints and secret references | Accepted; schema and secret backend partially deferred |
 | [0030](0030-go-workspace-and-model-bootstrap.md) | Go workspace, model service bootstrap, migrations, and local Compose | Accepted |
 | [0031](0031-model-names-without-snapshots.md) | One shared real model name without aliases or snapshots | Accepted |
+| [0032](0032-defer-tenant-cost-centers-and-chargeback.md) | Defer tenant cost centers and internal chargeback; retain production ownership | Accepted |
 
 See [open-questions.md](open-questions.md) for what is still undecided.

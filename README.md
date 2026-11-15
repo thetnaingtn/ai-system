@@ -76,9 +76,11 @@ make migrate-down
 `migrate-down` rolls back one migration. `MODEL_DATABASE_URL` overrides the local
 connection URL; adjust it when using a custom PostgreSQL port. Keep
 `search_path=public` in migration URLs so the version table stays in `public`
-after creating the `model` schema. The initial
-migration creates an empty `model` schema. Domain tables will be added when their
-design is settled. Migrations run explicitly, independently of the service
+after creating the `model` schema. Migration `000001` retains the original empty
+`model` schema. Migration `000002` creates `tenant_config.tenants` and its tier
+enum; `000003` creates `model_catalog.models`, its approval/accounting enums,
+foreign keys, constraints, and indexes. Rollback drops models before tenants.
+Migrations run explicitly, independently of the service
 process; Compose runs the same pinned tool version automatically at startup.
 
 ## Workspace and checks
@@ -89,8 +91,16 @@ make build
 make test
 make race
 make vet
+make test-migrations
 git diff --check
 ```
+
+`make test-migrations` requires Docker and runs the pinned migration image against
+a disposable PostgreSQL 18 container. It verifies upgrade from the bootstrap,
+defaults, key constraints, rollback, reapply, and repeat-up behavior. The container
+publishes no host ports, uses no development volumes, and is removed on completion.
+The ordinary test and race targets skip this integration test unless
+`MODEL_MIGRATION_TEST=1` is set.
 
 `go.work` selects local modules together; `go work sync` writes selected shared
 dependency versions back to each module's `go.mod`. Commit module manifests and

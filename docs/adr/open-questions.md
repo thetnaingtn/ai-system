@@ -20,6 +20,10 @@ excluded; configuration versions do not guarantee immutable underlying models.
 
 ## Settled policy and technical defaults
 
+[ADR-0032](0032-defer-tenant-cost-centers-and-chargeback.md) defers internal
+chargeback and omits tenant cost centers. Production owner contacts and provider
+usage/budget enforcement remain required.
+
 | Original topic | Decision / record |
 |---|---|
 | Client transport | Protobuf/gRPC across languages; optional HTTP compatibility later. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
