@@ -1,6 +1,6 @@
 # Open questions
 
-Updated: 2026-11-08
+Updated: 2026-11-15
 
 The five product/operating questions discussed with the owner have been answered.
 The remaining technical defaults were delegated and are recorded in ADR-0021
@@ -23,6 +23,9 @@ excluded; configuration versions do not guarantee immutable underlying models.
 [ADR-0032](0032-defer-tenant-cost-centers-and-chargeback.md) defers internal
 chargeback and omits tenant cost centers. Production owner contacts and provider
 usage/budget enforcement remain required.
+
+[ADR-0033](0033-approval-for-all-model-registrations.md) requires platform approval
+before any newly registered model can serve, including metered models.
 
 | Original topic | Decision / record |
 |---|---|

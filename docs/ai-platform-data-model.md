@@ -1,6 +1,6 @@
 # AI platform data model
 
-Updated: 2026-11-08
+Updated: 2026-11-15
 Status: `model_catalog.models` and `tenant_config.tenants` implemented in migrations
 `000003` and `000002`, respectively; other tables remain design drafts. Service
 application APIs and storage access have not been implemented.
@@ -21,6 +21,8 @@ settled. Data, sessions, memory, and workflow tables follow later.
 - Omit `config_origin` initially. Revisit configuration ownership tracking when
   CI-managed model configuration is introduced.
 - Use PostgreSQL enums for model approval status and accounting mode.
+- Require platform approval for every new registration, metered or unmetered,
+  before it can serve generation requests (ADR-0033).
 - Use UUID tenant primary/foreign keys in PostgreSQL, with a separate unique text
   identifier for the tenant identity proven at the transport boundary.
 - Omit tenant `cost_center` while internal chargeback is out of scope. Production
@@ -207,16 +209,42 @@ CREATE INDEX models_replacement_model_idx
 ```
 
 `accounting_mode` has no default: the registration path must choose it explicitly.
-The pending approval default prevents accidental execution of an incomplete
-registration; it does not establish a new manual-review requirement for every
-priced model. Lifecycle `active` and approval `pending` are independent: that
+Every new registration requires platform approval, including metered models,
+as recorded in ADR-0033. Lifecycle `active` and approval `pending` are independent: that
 combination is not serving-ready. No defaults are assigned to the endpoint,
 provider, or ownership. A null owner means platform ownership and may only be
 assigned by an authorized platform action.
 
 The service updates `updated_at` and increments `config_version` for each accepted
 model-configuration change in the same transaction, using the expected version
-in the update predicate. Timestamp defaults do not automatically run on updates.
+in the update predicate. This is optimistic concurrency control: the version
+comparison and increment happen in a single SQL statement, not in separate
+read-then-write steps. For an authorized lifecycle update, for example:
+
+```sql
+UPDATE model_catalog.models
+SET status = $1,
+    config_version = config_version + 1,
+    updated_at = now()
+WHERE name = $2 AND config_version = $3
+RETURNING config_version;
+```
+
+`$3` is the version observed by the caller. An update based on version 1 succeeds
+only while the row still has version 1, then returns version 2. Another update
+expecting version 1 cannot overwrite it. If no row is returned, distinguish an
+absent or inaccessible model from a stale-version conflict using authorized
+lookup; do not silently retry the write with a newer version. The caller must
+reload and reconsider its intended change. PostgreSQL still takes a short row
+lock during the write; optimistic concurrency avoids holding a lock while the
+caller reads or edits configuration.
+
+Endpoint-change requests are staged separately; this example does not authorize
+direct endpoint replacement. Approval must atomically verify that a change request
+is pending and its expected model configuration version still matches before
+applying it and recording the decision.
+
+Timestamp defaults do not automatically run on updates.
 Changes in the external secret value under the same reference are handled by
 credential refresh, independently of the row version. Names are case-sensitive,
 are sent unchanged to the provider, and cannot be renamed by the update API.
@@ -228,8 +256,8 @@ Constraints and behavior:
   approval, tenant authorization, capabilities, and applicable accounting checks.
 - A metered model without applicable pricing is blocked. Unmetered status requires
   platform approval; it does not remove rate or concurrency protection.
-- The initial approval rules for priced registrations remain open. The finalized
-  approval column does not impose new approval gates beyond ADR-0029.
+- Every new registration starts pending and requires platform approval under
+  ADR-0033, whether its accounting mode is metered or unmetered.
 - A pending replacement leaves this row's currently approved configuration intact.
 - Validate endpoint destinations and prohibit credentials embedded in URLs.
   Secret references and internal endpoint details are not public discovery fields.
@@ -668,3 +696,5 @@ Do not implement the other draft tables merely because they appear in this file.
   without aliases or snapshots.
 - [ADR-0032](adr/0032-defer-tenant-cost-centers-and-chargeback.md): defer tenant
   cost centers and internal chargeback; retain production owner requirements.
+- [ADR-0033](adr/0033-approval-for-all-model-registrations.md): require platform
+  approval for all new model registrations, including metered models.

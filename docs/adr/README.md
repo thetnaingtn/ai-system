@@ -43,5 +43,6 @@ to hide history.
 | [0030](0030-go-workspace-and-model-bootstrap.md) | Go workspace, model service bootstrap, migrations, and local Compose | Accepted |
 | [0031](0031-model-names-without-snapshots.md) | One shared real model name without aliases or snapshots | Accepted |
 | [0032](0032-defer-tenant-cost-centers-and-chargeback.md) | Defer tenant cost centers and internal chargeback; retain production ownership | Accepted |
+| [0033](0033-approval-for-all-model-registrations.md) | Require platform approval for all new model registrations | Accepted |
 
 See [open-questions.md](open-questions.md) for what is still undecided.
