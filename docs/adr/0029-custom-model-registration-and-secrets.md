@@ -3,6 +3,10 @@
 Date: 2026-11-01
 Status: Accepted (registration schema and secret backend partially deferred)
 
+Follow-up: [ADR-0033](0033-approval-for-all-model-registrations.md) requires platform
+approval for every new registration, including metered models, resolving the
+priced-model activation question below. Other decisions remain in effect.
+
 ## Context
 
 Teams need to register custom and self-hosted endpoints for organization-wide use.

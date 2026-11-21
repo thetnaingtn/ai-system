@@ -3,6 +3,10 @@
 Date: 2026-08-30
 Status: Accepted
 
+Follow-up: [ADR-0031](0031-model-names-without-snapshots.md) supersedes the
+family-alias wording below: disabling fallback restricts catalog model selection
+without freezing the provider's underlying implementation.
+
 ## Context
 
 Some behavior genuinely needs to vary per call — an eval job wants

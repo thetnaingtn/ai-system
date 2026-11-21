@@ -1,6 +1,6 @@
 # Open questions
 
-Updated: 2026-11-01
+Updated: 2026-11-15
 
 The five product/operating questions discussed with the owner have been answered.
 The remaining technical defaults were delegated and are recorded in ADR-0021
@@ -13,12 +13,24 @@ selects PostgreSQL/Redis, Go SDK delivery, and model-service-first sequencing.
 and PostgreSQL outage behavior; [ADR-0028](0028-monthly-budgets-and-unmetered-model-approval.md)
 settles monthly budgets and approved unmetered models; [ADR-0029](0029-custom-model-registration-and-secrets.md)
 settles organization-wide custom models, endpoint updates, and managed credentials.
+[ADR-0031](0031-model-names-without-snapshots.md) removes the separate model
+snapshot concept: all clients use the same real model name, which is also sent
+to the provider. Separate catalog aliases and client-specific model names are
+excluded; configuration versions do not guarantee immutable underlying models.
 
 ## Settled policy and technical defaults
+
+[ADR-0032](0032-defer-tenant-cost-centers-and-chargeback.md) defers internal
+chargeback and omits tenant cost centers. Production owner contacts and provider
+usage/budget enforcement remain required.
+
+[ADR-0033](0033-approval-for-all-model-registrations.md) requires platform approval
+before any newly registered model can serve, including metered models.
 
 | Original topic | Decision / record |
 |---|---|
 | Client transport | Protobuf/gRPC across languages; optional HTTP compatibility later. [ADR-0021](0021-service-boundaries-and-sdk-contracts.md) |
+| Model selection | One shared real model name, also sent to the provider; no separate aliases, snapshots, or snapshot-pinning API. [ADR-0031](0031-model-names-without-snapshots.md) |
 | Structured-output emulation | Deferred beyond v1; native support only initially. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
 | Reasoning effort | Provider-specific passthrough. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
 | Tool-conversation fallback | Pin by default; explicit tenant-policy opt-out. [ADR-0023](0023-model-feature-and-prompt-defaults.md) |
@@ -57,6 +69,12 @@ Start with the protobuf/Go contract and PostgreSQL schema, then implement the
 model service against the accepted ADRs.
 
 ### 1. API contracts and Go SDK
+
+The initial model-management contract is defined under `proto/platform/model/v1/`
+and generated into `gen/go/platform/model/v1/`, using Buf and Go module tools
+(ADR-0034). It covers registration, discovery, version-checked updates, review,
+and credential rotation. Handlers, write-replay persistence, and authentication
+remain unimplemented; generation/prompts/policies contracts remain open.
 
 - [ ] Finalize versioned protobuf messages and RPCs for generation/streaming,
   prompts/releases, discovery, policies, model registration/approval/update,

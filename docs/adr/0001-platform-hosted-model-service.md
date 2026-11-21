@@ -3,6 +3,9 @@
 Date: 2026-08-30
 Status: Accepted
 
+Follow-up: [ADR-0031](0031-model-names-without-snapshots.md) removes the separate
+model snapshot/version-pinning concept referenced below.
+
 ## Context
 
 Product teams across the company call LLM providers directly. Each team holds

@@ -1,0 +1,194 @@
+syntax = "proto3";
+
+package platform.model.v1;
+
+import "google/protobuf/field_mask.proto";
+import "platform/model/v1/model.proto";
+import "platform/model/v1/model_change.proto";
+
+option go_package = "github.com/thetnaingtn/ai-system/gen/go/platform/model/v1;modelv1";
+
+// ModelService manages the shared model catalog. Authentication establishes the
+// calling tenant and principal at the transport boundary; request bodies cannot
+// choose another tenant. RPC permissions are enforced by the service.
+service ModelService {
+  // Registers a model as pending. Identical authorized registration reuses the
+  // existing entry; conflicting registration never overwrites it.
+  rpc RegisterModel(RegisterModelRequest) returns (RegisterModelResponse);
+  // Returns discovery metadata, or management configuration when authorized.
+  rpc GetModel(GetModelRequest) returns (GetModelResponse);
+  // Lists permitted discovery metadata in model-name order.
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+  // Applies an authorized update with optimistic concurrency control, or stages
+  // a proposal when endpoint/provider or accounting-mode changes need approval.
+  rpc UpdateModel(UpdateModelRequest) returns (UpdateModelResponse);
+  // Returns an owner's or platform reviewer's proposal, including its decision.
+  rpc GetModelChange(GetModelChangeRequest) returns (GetModelChangeResponse);
+  // Lists proposals within the caller's management/review permissions.
+  rpc ListModelChanges(ListModelChangesRequest) returns (ListModelChangesResponse);
+  // Requires platform review permission and atomically activates a pending change.
+  rpc ApproveModelChange(ApproveModelChangeRequest) returns (ApproveModelChangeResponse);
+  // Requires platform review permission; preserves an existing approved endpoint.
+  rpc RejectModelChange(RejectModelChangeRequest) returns (RejectModelChangeResponse);
+  // Rotates a write-only secret without endpoint reapproval. Never logs or returns
+  // the submitted credential or the secret-manager reference.
+  rpc RotateModelCredential(RotateModelCredentialRequest) returns (RotateModelCredentialResponse);
+}
+
+message RegisterModelRequest {
+  ModelConfiguration configuration = 1;
+  // Write-only secret, sent over an authenticated encrypted transport. Absence
+  // requests a credentialless endpoint; an explicitly empty value is invalid.
+  optional string credential = 2;
+  // Default false derives the owner from authenticated tenant identity. Setting
+  // true requires platform permission; it cannot select an arbitrary tenant.
+  bool platform_owned = 3;
+  // Required UUID for safe write retries, scoped to authenticated principal,
+  // tenant, and method. Reuse only for the same intended mutation.
+  string request_id = 4;
+}
+
+message RegisterModelResponse {
+  Model model = 1;
+  ModelChange change = 2;
+  // True when an equivalent authorized registration already existed.
+  bool already_exists = 3;
+}
+
+message GetModelRequest {
+  string name = 1;
+  // UNSPECIFIED defaults to BASIC. CONFIGURATION requires management permission.
+  ModelView view = 2;
+}
+
+message GetModelResponse {
+  Model model = 1;
+  // Present only for an authorized CONFIGURATION view; never contains secrets.
+  ModelConfiguration configuration = 2;
+}
+
+message ListModelsRequest {
+  // Zero defaults to 50; valid explicit sizes are 1 through 200.
+  int32 page_size = 1;
+  // Opaque server token bound to the caller and original filters.
+  string page_token = 2;
+  // UNSPECIFIED does not filter lifecycle status.
+  ModelStatus status = 3;
+  // UNSPECIFIED defaults to APPROVED. Other states require management permission.
+  ApprovalStatus approval_status = 4;
+}
+
+message ListModelsResponse {
+  repeated Model models = 1;
+  string next_page_token = 2;
+}
+
+message UpdateModelRequest {
+  // configuration.name identifies the existing model. No owner or approval
+  // fields are writable through this message.
+  ModelConfiguration configuration = 1;
+  // Required nonempty mask relative to ModelConfiguration. Immutable name,
+  // wildcard paths, and unknown paths are rejected. Masked nullable fields can
+  // be cleared; fields outside the mask are left unchanged.
+  google.protobuf.FieldMask update_mask = 2;
+  // Required positive version read by the caller; stale writes fail with ABORTED.
+  int64 expected_config_version = 3;
+  string request_id = 4;
+  // Optional write-only credential for a staged endpoint/provider replacement.
+  // Omit to retain the configured credential. Never changes the active credential
+  // before approval; direct rotations use RotateModelCredential instead.
+  optional string credential = 5;
+}
+
+message UpdateModelResponse {
+  // Current model after a direct update, or unchanged while a proposal is pending.
+  Model model = 1;
+  // Present when the whole requested mutation is staged for platform approval.
+  ModelChange change = 2;
+}
+
+message GetModelChangeRequest {
+  string id = 1;
+}
+
+message GetModelChangeResponse {
+  ModelChange change = 1;
+}
+
+message ListModelChangesRequest {
+  // Empty selects all models within the caller's permitted review/ownership scope.
+  string model_name = 1;
+  // UNSPECIFIED does not filter review status.
+  ApprovalStatus approval_status = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListModelChangesResponse {
+  repeated ModelChange changes = 1;
+  string next_page_token = 2;
+}
+
+message ApproveModelChangeRequest {
+  string id = 1;
+  // Must match both the proposal's expected version and the current model.
+  int64 expected_config_version = 2;
+  string request_id = 3;
+}
+
+message ApproveModelChangeResponse {
+  Model model = 1;
+  ModelChange change = 2;
+}
+
+message RejectModelChangeRequest {
+  string id = 1;
+  // Required sanitized review explanation; never includes credentials/payloads.
+  string reason = 2;
+  string request_id = 3;
+}
+
+message RejectModelChangeResponse {
+  Model model = 1;
+  ModelChange change = 2;
+}
+
+message RotateModelCredentialRequest {
+  string name = 1;
+  // Required nonempty write-only secret. Rotation does not change endpoint URL.
+  string credential = 2;
+  int64 expected_config_version = 3;
+  string request_id = 4;
+}
+
+message RotateModelCredentialResponse {
+  Model model = 1;
+}
+
+// ModelErrorReason is a stable machine-readable model-management error category.
+enum ModelErrorReason {
+  MODEL_ERROR_REASON_UNSPECIFIED = 0;
+  MODEL_ERROR_REASON_INVALID_CONFIGURATION = 1;
+  MODEL_ERROR_REASON_MODEL_NOT_FOUND = 2;
+  MODEL_ERROR_REASON_NAME_CONFLICT = 3;
+  MODEL_ERROR_REASON_CONFIG_VERSION_CONFLICT = 4;
+  MODEL_ERROR_REASON_CHANGE_NOT_FOUND = 5;
+  MODEL_ERROR_REASON_CHANGE_NOT_PENDING = 6;
+  MODEL_ERROR_REASON_UNSUPPORTED_PROVIDER = 7;
+  MODEL_ERROR_REASON_ENDPOINT_REJECTED = 8;
+  MODEL_ERROR_REASON_MISSING_PRICING = 9;
+  MODEL_ERROR_REASON_SECRET_STORAGE_UNAVAILABLE = 10;
+  MODEL_ERROR_REASON_REQUEST_ID_CONFLICT = 11;
+  MODEL_ERROR_REASON_INVALID_PAGE_TOKEN = 12;
+  MODEL_ERROR_REASON_PERMISSION_DENIED = 13;
+}
+
+// ModelErrorDetail is attached to a non-OK gRPC status for authorized callers.
+// Messages and details must never echo credentials or submitted payloads.
+message ModelErrorDetail {
+  ModelErrorReason reason = 1;
+  string model_name = 2;
+  string change_id = 3;
+  optional int64 expected_config_version = 4;
+  optional int64 current_config_version = 5;
+}

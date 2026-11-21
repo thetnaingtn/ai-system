@@ -2,17 +2,30 @@
 
 ## Project Structure & Module Organization
 
-This repository is currently an architecture-first Go module:
-`github.com/thetnaingtn/ai-system`.
+This repository is a Go workspace monorepo. The root module is
+`github.com/thetnaingtn/ai-system`; the first service module is
+`github.com/thetnaingtn/ai-system/model`.
 
 - `go.mod` declares Go 1.26.3.
+- `go.work` selects the root and model modules; run `go work sync` after changing dependencies.
+- `proto/platform/model/v1/` holds the model-management contract; `gen/go/` holds
+  ignored generated Go messages and gRPC interfaces in the root module.
+- Root `buf.yaml`/`buf.gen.yaml` configure Buf 1.75.0; generator versions are
+  managed by Go module `tool` directives and invoked through `go tool`.
+- `model/cmd/main.go` is the model service entry point (gRPC process health only).
+- `model/internal/handler/model.go` contains unregistered model-management RPC
+  stubs, each with `panic("not implemented")`.
+- `model/migrations/` holds golang-migrate SQL pairs.
+- Root `compose.yaml` starts the model service and includes `model/compose.yaml`
+  for PostgreSQL, Redis, and migrations.
 - `docs/adr/` contains numbered architecture decision records and their index.
 - `docs/adr/open-questions.md` tracks remaining model-service implementation work.
 - `.agents/skills/` contains repository-local agent skills.
 
-Application packages, tests, deployment manifests, and generated protobuf code
-have not been added yet. Establish their layout explicitly during implementation;
-do not assume existing `cmd/`, `internal/`, or `proto/` directories.
+Application RPC behavior, provider/storage integration, ergonomic SDK wrappers,
+and production deployment manifests have not been added yet. Establish their
+layout explicitly during implementation. Keep generated contracts separate from
+the handwritten SDK wrappers and do not edit or commit generated files.
 
 ## Architecture & Decision Records
 
@@ -26,17 +39,28 @@ records supersede earlier decisions where stated. Add sequential records such as
 
 ## Build, Test, and Development Commands
 
-Run from the repository root once Go packages exist:
+Run from the repository root:
 
-- `go build ./...` — compile all packages.
-- `go test ./...` — run the test suite.
-- `go test -race ./...` — check concurrent code for data races.
-- `go vet ./...` — run standard static checks.
+- `make build` — compile root contract packages and the model service into `bin/model`.
+- `make test` — run root and service tests.
+- `make race` — check concurrent code for data races.
+- `make vet` — run standard static checks.
+- `make sync` — synchronize workspace dependency selection.
+- `make tools` — install the pinned migration CLI into `bin/`.
+- `make proto-tools` — check Buf and resolve/run the pinned Go generation tools.
+- `make proto-generate` — regenerate ignored Go messages and gRPC interfaces.
+- `make proto-check` — check protobuf build/lint/format and run generation.
+- `make proto-breaking` — compare contracts against main (after its first baseline).
+- `docker compose up --build -d` — start the local stack and apply migrations.
 - `gofmt -w path/to/file.go` — format changed Go files.
 - `git diff --check` — catch whitespace errors in tracked changes.
 
-There is currently no runnable service, Makefile, or configured lint pipeline.
-Document startup, migration, and protobuf-generation commands when introduced.
+Root `go test ./...` does not traverse nested modules. Extend Make targets when
+adding modules. See README.md for host startup, migration, and generation commands.
+Build, test, vet, race, and run targets generate protobuf code first. Direct Go
+commands require `make proto-generate` first on a fresh checkout. The protobuf
+workflow enforces schema checks, generation, compilation, and compatibility; a
+general application lint pipeline is not configured yet.
 
 ## Coding Style & Naming Conventions
 

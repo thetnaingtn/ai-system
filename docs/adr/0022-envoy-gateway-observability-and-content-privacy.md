@@ -3,6 +3,10 @@
 Date: 2026-11-01
 Status: Accepted
 
+Follow-up: [ADR-0031](0031-model-names-without-snapshots.md) replaces snapshot
+metadata with requested and actual model name metadata. Content privacy
+requirements remain accepted.
+
 ## Context
 
 Teams should call a stable service endpoint without configuring backend discovery

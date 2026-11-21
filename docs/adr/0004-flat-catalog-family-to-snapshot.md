@@ -3,6 +3,10 @@
 Date: 2026-08-30
 Status: Accepted
 
+Follow-up: [ADR-0031](0031-model-names-without-snapshots.md) supersedes the snapshot
+requirements below. The flat namespace and catalog lifecycle remain accepted;
+historical snapshot decisions are preserved.
+
 ## Context
 
 Callers need to name a model. Two questions: what namespace do names live in,

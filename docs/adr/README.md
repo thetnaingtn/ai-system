@@ -14,7 +14,7 @@ to hide history.
 | [0001](0001-platform-hosted-model-service.md) | Model service is hosted by the platform team; the SDK is a thin gRPC client | Accepted |
 | [0002](0002-hard-fail-not-client-bypass.md) | Service unavailability is a hard fail; clients never bypass to providers | Accepted |
 | [0003](0003-shared-provider-key.md) | One shared provider key per provider (noisy neighbor accepted) | Accepted |
-| [0004](0004-flat-catalog-family-to-snapshot.md) | Flat org-wide model namespace; families map to pinned snapshots | Accepted |
+| [0004](0004-flat-catalog-family-to-snapshot.md) | Flat org-wide model namespace; families map to pinned snapshots | Snapshot requirements superseded by ADR-0031; namespace and lifecycle retained |
 | [0005](0005-per-team-fallback-policy.md) | Fallback chains are per-team config, not request payload | Accepted |
 | [0006](0006-discovery-vs-resolution.md) | Discovery is build-time; resolution is request-time; separate code paths | Accepted |
 | [0007](0007-fallback-triggers.md) | Which failures trigger fallback, and which never do | Accepted |
@@ -40,5 +40,11 @@ to hide history.
 | [0027](0027-prompt-equality-and-postgres-degradation.md) | Exact prompt deduplication and cached inference during PostgreSQL outages | Accepted |
 | [0028](0028-monthly-budgets-and-unmetered-model-approval.md) | Monthly spend caps and approved unmetered models | Accepted; accounting details partially deferred |
 | [0029](0029-custom-model-registration-and-secrets.md) | Organization-wide custom models with reviewed endpoints and secret references | Accepted; schema and secret backend partially deferred |
+| [0030](0030-go-workspace-and-model-bootstrap.md) | Go workspace, model service bootstrap, migrations, and local Compose | Accepted |
+| [0031](0031-model-names-without-snapshots.md) | One shared real model name without aliases or snapshots | Accepted |
+| [0032](0032-defer-tenant-cost-centers-and-chargeback.md) | Defer tenant cost centers and internal chargeback; retain production ownership | Accepted |
+| [0033](0033-approval-for-all-model-registrations.md) | Require platform approval for all new model registrations | Accepted |
+| [0034](0034-buf-and-model-management-contract.md) | Buf tooling and the initial model-management protobuf contract | Accepted |
+| [0035](0035-generate-protobuf-code-at-build-time.md) | Exclude generated protobuf code from Git and generate during builds | Accepted |
 
 See [open-questions.md](open-questions.md) for what is still undecided.

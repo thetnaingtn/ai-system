@@ -3,6 +3,10 @@
 Date: 2026-09-06
 Status: Accepted
 
+Follow-up: [ADR-0032](0032-defer-tenant-cost-centers-and-chargeback.md) defers
+internal chargeback and removes the production cost-center requirement below.
+Production owner contacts and the identity/authorization decisions remain required.
+
 ## Context
 
 Almost every decision already recorded needs to know which tenant a request came

@@ -1,0 +1,36 @@
+name: Protobuf
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            model/go.sum
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: 1.75.0
+          setup_only: true
+          pr_comment: false
+      - run: make proto-tools proto-check build test vet
+      - name: Check compatibility with existing contracts
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if git cat-file -e "$BASE_SHA:buf.yaml" 2>/dev/null; then
+            make proto-breaking BUF_BREAKING_AGAINST=".git#ref=$BASE_SHA"
+          else
+            echo 'The base commit predates Buf contracts; this change establishes the baseline.'
+          fi
