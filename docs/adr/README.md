@@ -45,5 +45,6 @@ to hide history.
 | [0032](0032-defer-tenant-cost-centers-and-chargeback.md) | Defer tenant cost centers and internal chargeback; retain production ownership | Accepted |
 | [0033](0033-approval-for-all-model-registrations.md) | Require platform approval for all new model registrations | Accepted |
 | [0034](0034-buf-and-model-management-contract.md) | Buf tooling and the initial model-management protobuf contract | Accepted |
+| [0035](0035-generate-protobuf-code-at-build-time.md) | Exclude generated protobuf code from Git and generate during builds | Accepted |
 
 See [open-questions.md](open-questions.md) for what is still undecided.

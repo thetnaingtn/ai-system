@@ -3,6 +3,7 @@
 .codex
 .cache
 bin
+gen
 **/.env
 **/.env.*
 !**/.env.example

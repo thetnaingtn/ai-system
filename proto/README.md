@@ -10,10 +10,11 @@ version. The initial contract lives in `proto/platform/model/v1/` with package
 | `platform/model/v1/model_change.proto` | Pending/reviewed configuration changes |
 | `platform/model/v1/model_service.proto` | Nine model-management RPCs, request/response messages, and error details |
 
-Generated Go files are committed under `gen/go/platform/model/v1/` in the root
+Generated Go files are ignored under `gen/go/platform/model/v1/` in the root
 module, `github.com/thetnaingtn/ai-system`. Import them as
 `github.com/thetnaingtn/ai-system/gen/go/platform/model/v1`, package `modelv1`.
-Do not edit generated files.
+Do not edit or commit generated files. Generate before direct Go commands on a
+fresh checkout; root Make build/test/vet/race/run targets do this automatically.
 
 ## Toolchain and generation
 
@@ -34,9 +35,9 @@ their modules through Go if needed. `go.mod` pins protoc-gen-go v1.36.11 and
 protoc-gen-go-grpc v1.6.2 using `tool` directives. `go tool` builds/runs them from
 Go's cache. There is no plugin installation into `bin/` or a global `GOBIN`.
 
-`proto-check` builds/lints schemas, checks formatting, and compares committed Go
-files with freshly generated files in a temporary directory. It detects missing,
-stale, or extra generated files without rewriting the working tree.
+`proto-check` builds/lints schemas, checks formatting, and generates Go output.
+There is no comparison against committed generated files. Docker excludes local
+generated output and runs generation inside the image build.
 
 There are no external protobuf schema dependencies yet; only bundled well-known
 types are imported. No `buf.lock` is needed until external dependencies are added.
@@ -66,4 +67,6 @@ still require review for behavioral and authorization changes.
 These definitions do not enable handlers on the model process, which remains
 health-only. See the [model API design](../docs/ai-platform-model-api.md) and
 [ADR-0034](../docs/adr/0034-buf-and-model-management-contract.md) for behavior and
-implementation prerequisites.
+implementation prerequisites, and
+[ADR-0035](../docs/adr/0035-generate-protobuf-code-at-build-time.md) for ignored
+build-time generation.

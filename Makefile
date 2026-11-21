@@ -5,28 +5,28 @@ BUF ?= buf
 BUF_VERSION := 1.75.0
 BUF_BREAKING_AGAINST ?= .git\#branch=main
 
-.PHONY: build test race vet sync run tools migrate-up migrate-down migrate-create proto-tools proto-toolchain proto-format proto-lint proto-generate proto-check proto-check-generated proto-breaking
+.PHONY: build test race vet sync run tools migrate-up migrate-down migrate-create proto-tools proto-toolchain proto-format proto-lint proto-generate proto-check proto-breaking
 
-build:
+build: proto-generate
 	go build ./...
 	go build -o bin/model ./model/cmd
 
-test:
+test: proto-generate
 	go test ./...
 	cd model && go test ./...
 
-race:
+race: proto-generate
 	go test -race ./...
 	cd model && go test -race ./...
 
-vet:
+vet: proto-generate
 	go vet ./...
 	cd model && go vet ./...
 
 sync:
 	go work sync
 
-run:
+run: proto-generate
 	go run ./model/cmd
 
 tools:
@@ -50,14 +50,7 @@ proto-lint: proto-toolchain
 proto-generate: proto-toolchain
 	$(BUF) generate
 
-proto-check-generated: proto-toolchain
-	@set -eu; \
-	check_dir=$$(mktemp -d); \
-	trap 'rm -rf "$$check_dir"' EXIT; \
-	$(BUF) generate --output "$$check_dir"; \
-	diff -ru gen/go "$$check_dir/gen/go"
-
-proto-check: proto-lint proto-check-generated
+proto-check: proto-lint proto-generate
 	$(BUF) format --diff --exit-code
 
 proto-breaking: proto-toolchain

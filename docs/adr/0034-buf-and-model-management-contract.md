@@ -3,6 +3,10 @@
 Date: 2026-11-15
 Status: Accepted
 
+Follow-up: [ADR-0035](0035-generate-protobuf-code-at-build-time.md) replaces
+committed generated files with ignored build-time output. Historical generation
+and freshness-check decisions below are preserved.
+
 ## Decision
 
 - Keep model sources at `proto/platform/model/v1/`, with protobuf package

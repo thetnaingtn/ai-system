@@ -9,7 +9,7 @@ This repository is a Go workspace monorepo. The root module is
 - `go.mod` declares Go 1.26.3.
 - `go.work` selects the root and model modules; run `go work sync` after changing dependencies.
 - `proto/platform/model/v1/` holds the model-management contract; `gen/go/` holds
-  committed Go messages and gRPC interfaces in the root module.
+  ignored generated Go messages and gRPC interfaces in the root module.
 - Root `buf.yaml`/`buf.gen.yaml` configure Buf 1.75.0; generator versions are
   managed by Go module `tool` directives and invoked through `go tool`.
 - `model/cmd/main.go` is the model service entry point (gRPC process health only).
@@ -25,7 +25,7 @@ This repository is a Go workspace monorepo. The root module is
 Application RPC behavior, provider/storage integration, ergonomic SDK wrappers,
 and production deployment manifests have not been added yet. Establish their
 layout explicitly during implementation. Keep generated contracts separate from
-the handwritten SDK wrappers and do not edit generated files directly.
+the handwritten SDK wrappers and do not edit or commit generated files.
 
 ## Architecture & Decision Records
 
@@ -48,8 +48,8 @@ Run from the repository root:
 - `make sync` — synchronize workspace dependency selection.
 - `make tools` — install the pinned migration CLI into `bin/`.
 - `make proto-tools` — check Buf and resolve/run the pinned Go generation tools.
-- `make proto-generate` — regenerate committed Go messages and gRPC interfaces.
-- `make proto-check` — check protobuf build/lint/format and generated freshness.
+- `make proto-generate` — regenerate ignored Go messages and gRPC interfaces.
+- `make proto-check` — check protobuf build/lint/format and run generation.
 - `make proto-breaking` — compare contracts against main (after its first baseline).
 - `docker compose up --build -d` — start the local stack and apply migrations.
 - `gofmt -w path/to/file.go` — format changed Go files.
@@ -57,8 +57,10 @@ Run from the repository root:
 
 Root `go test ./...` does not traverse nested modules. Extend Make targets when
 adding modules. See README.md for host startup, migration, and generation commands.
-The protobuf workflow enforces schema checks, generation freshness, compilation,
-and compatibility; a general application lint pipeline is not configured yet.
+Build, test, vet, race, and run targets generate protobuf code first. Direct Go
+commands require `make proto-generate` first on a fresh checkout. The protobuf
+workflow enforces schema checks, generation, compilation, and compatibility; a
+general application lint pipeline is not configured yet.
 
 ## Coding Style & Naming Conventions
 

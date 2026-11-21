@@ -14,7 +14,7 @@ go.work                 Workspace and shared dependency selection
 proto/                  Shared protobuf sources, grouped by service/version
 buf.yaml                Buf module, lint, and compatibility configuration
 buf.gen.yaml            Go message and gRPC generation through go tool
-gen/go/                 Committed generated Go contracts (root module)
+gen/go/                 Ignored generated Go contracts (root module)
 compose.yaml            Local service orchestration
 model/
   go.mod                Model service module
@@ -105,7 +105,8 @@ dependency versions back to each module's `go.mod`. Commit module manifests and
 checksums as well as workspace changes. After changing dependencies, run
 `go mod tidy` in the owning module and `make sync` from the root.
 
-Root Make targets check both shared generated contracts and the model module.
+Root Make targets generate protobuf code before checking shared contracts and
+the model module. Direct Go commands require `make proto-generate` first.
 Root `go test ./...` does not include nested modules. Add new service modules with
 `go work use ./<service>` and extend the Make targets.
 
@@ -118,7 +119,7 @@ registered on the service.
 `model/internal/handler/model.go` implements the generated server interface with
 `panic("not implemented")` placeholders for all nine RPCs. The model module
 references the root contracts through a local module replacement; the Docker build
-includes the root manifests and generated code. The running process stays
+generates contracts from the protobuf sources. The running process stays
 health-only until authenticated RPC behavior is implemented.
 
 ```sh
@@ -132,5 +133,6 @@ make proto-breaking
 
 Generator versions are recorded as Go module tools, so Buf invokes `go tool`
 without standalone plugin installation. The protobuf workflow checks formatting,
-lint, generation freshness, Go compilation, and compatibility. See
+lint, generation, Go compilation, and compatibility. Root `gen/` is ignored by
+Git and Docker; local and image builds recreate it from source. See
 [proto/README.md](proto/README.md) for toolchain and baseline details.
